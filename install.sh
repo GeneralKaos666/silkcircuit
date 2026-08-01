@@ -350,11 +350,16 @@ install_alacritty() {
     local theme_dir="$HOME/.config/alacritty/themes"
     printf "${PURPLE}${BOLD}  >> Alacritty${RESET}\n"
 
-    safe_copy "${EXTRAS_DIR}/alacritty.yml" "${theme_dir}/silkcircuit.yml" "alacritty:dark"
-    if [[ -f "${EXTRAS_DIR}/alacritty-dawn.yml" ]]; then
-        safe_copy "${EXTRAS_DIR}/alacritty-dawn.yml" "${theme_dir}/silkcircuit-dawn.yml" "alacritty:dawn"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/alacritty.yml" "${theme_dir}/silkcircuit.yml" "alacritty:dark"; then
+        count=$((count + 1))
     fi
-    success "Installed Alacritty themes"
+    if [[ -f "${EXTRAS_DIR}/alacritty-dawn.yml" ]]; then
+        if safe_copy "${EXTRAS_DIR}/alacritty-dawn.yml" "${theme_dir}/silkcircuit-dawn.yml" "alacritty:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Alacritty themes"
     diminfo "Import in alacritty.toml: [general] import = [\"~/.config/alacritty/themes/silkcircuit.yml\"]"
 }
 
@@ -362,11 +367,16 @@ install_kitty() {
     local theme_dir="$HOME/.config/kitty/themes"
     printf "${PURPLE}${BOLD}  >> Kitty${RESET}\n"
 
-    safe_copy "${EXTRAS_DIR}/kitty.conf" "${theme_dir}/silkcircuit.conf" "kitty:dark"
-    if [[ -f "${EXTRAS_DIR}/kitty-dawn.conf" ]]; then
-        safe_copy "${EXTRAS_DIR}/kitty-dawn.conf" "${theme_dir}/silkcircuit-dawn.conf" "kitty:dawn"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/kitty.conf" "${theme_dir}/silkcircuit.conf" "kitty:dark"; then
+        count=$((count + 1))
     fi
-    success "Installed Kitty themes"
+    if [[ -f "${EXTRAS_DIR}/kitty-dawn.conf" ]]; then
+        if safe_copy "${EXTRAS_DIR}/kitty-dawn.conf" "${theme_dir}/silkcircuit-dawn.conf" "kitty:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Kitty themes"
     diminfo "Activate: include themes/silkcircuit.conf"
 }
 
@@ -374,11 +384,16 @@ install_warp() {
     local theme_dir="$HOME/.warp/themes"
     printf "${PURPLE}${BOLD}  >> Warp${RESET}\n"
 
-    safe_copy "${EXTRAS_DIR}/warp.yaml" "${theme_dir}/silkcircuit.yaml" "warp:dark"
-    if [[ -f "${EXTRAS_DIR}/warp-dawn.yaml" ]]; then
-        safe_copy "${EXTRAS_DIR}/warp-dawn.yaml" "${theme_dir}/silkcircuit-dawn.yaml" "warp:dawn"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/warp.yaml" "${theme_dir}/silkcircuit.yaml" "warp:dark"; then
+        count=$((count + 1))
     fi
-    success "Installed Warp themes"
+    if [[ -f "${EXTRAS_DIR}/warp-dawn.yaml" ]]; then
+        if safe_copy "${EXTRAS_DIR}/warp-dawn.yaml" "${theme_dir}/silkcircuit-dawn.yaml" "warp:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Warp themes"
 }
 
 install_btop() {
@@ -467,8 +482,12 @@ install_git() {
             success "Git theme already configured"
         else
             if [[ "$DRY_RUN" == false ]]; then
-                git config --global --add include.path "$target"
-                success "Installed Git theme (added include to .gitconfig)"
+                if git config --global --add include.path "$target"; then
+                    success "Installed Git theme (added include to .gitconfig)"
+                else
+                    FAILED+=("git:include.path")
+                    fail "Could not add include.path to global gitconfig"
+                fi
             else
                 success "Git theme (dry-run: would add include to .gitconfig)"
             fi
@@ -514,7 +533,7 @@ install_bat() {
     if [[ -n "$theme_dir" ]]; then
         mkdir -p "$theme_dir"
         if safe_copy "${EXTRAS_DIR}/bat/SilkCircuit.tmTheme" "${theme_dir}/SilkCircuit.tmTheme" "bat:theme"; then
-            safe_copy "${EXTRAS_DIR}/bat/config" "${config_dir}/config" "bat:config"
+            safe_copy "${EXTRAS_DIR}/bat/config" "${config_dir}/config" "bat:config" || true
             if [[ "$DRY_RUN" == false ]]; then
                 bat cache --build &>/dev/null || true
             fi
@@ -530,9 +549,14 @@ install_lsd() {
     printf "${PURPLE}${BOLD}  >> lsd${RESET}\n"
 
     local config_dir="$HOME/.config/lsd"
-    safe_copy "${EXTRAS_DIR}/lsd/colors.yaml" "${config_dir}/colors.yaml" "lsd:colors"
-    safe_copy "${EXTRAS_DIR}/lsd/config.yaml" "${config_dir}/config.yaml" "lsd:config"
-    success "Installed lsd theme"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/lsd/colors.yaml" "${config_dir}/colors.yaml" "lsd:colors"; then
+        count=$((count + 1))
+    fi
+    if safe_copy "${EXTRAS_DIR}/lsd/config.yaml" "${config_dir}/config.yaml" "lsd:config"; then
+        count=$((count + 1))
+    fi
+    success "Installed ${count} lsd themes"
 }
 
 install_procs() {
@@ -578,11 +602,12 @@ install_lazygit() {
     # Merge theme into existing config or create new
     if [[ -f "$target" ]] && grep -q "gui:" "$target" 2>/dev/null; then
         warn "Existing lazygit config found - theme file saved separately"
-        safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "${config_dir}/silkcircuit-theme.yml" "lazygit:theme-ref"
+        safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "${config_dir}/silkcircuit-theme.yml" "lazygit:theme-ref" || true
         diminfo "Merge theme settings from: ${config_dir}/silkcircuit-theme.yml"
     else
-        safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "$target" "lazygit"
-        success "Installed lazygit theme"
+        if safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "$target" "lazygit"; then
+            success "Installed lazygit theme"
+        fi
     fi
 }
 
