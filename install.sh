@@ -406,6 +406,17 @@ install_alacritty() {
     diminfo "In ~/.config/alacritty/alacritty.toml, under [general]:"
     diminfo "import = [\"~/.config/alacritty/themes/silkcircuit-${PRIMARY}.toml\"]"
     diminfo "Needs Alacritty 0.13 or newer for TOML config"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/alacritty.yml" "${theme_dir}/silkcircuit.yml" "alacritty:dark"; then
+        count=$((count + 1))
+    fi
+    if [[ -f "${EXTRAS_DIR}/alacritty-dawn.yml" ]]; then
+        if safe_copy "${EXTRAS_DIR}/alacritty-dawn.yml" "${theme_dir}/silkcircuit-dawn.yml" "alacritty:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Alacritty themes"
+    diminfo "Import in alacritty.toml: [general] import = [\"~/.config/alacritty/themes/silkcircuit.yml\"]"
 }
 
 install_kitty() {
@@ -414,6 +425,17 @@ install_kitty() {
     copy_variants "${EXTRAS_DIR}/kitty" "${XDG_CONFIG}/kitty/themes" "kitty" "silkcircuit-@.conf"
     success "Installed ${COPIED} Kitty themes"
     diminfo "In ~/.config/kitty/kitty.conf: include themes/silkcircuit-${PRIMARY}.conf"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/kitty.conf" "${theme_dir}/silkcircuit.conf" "kitty:dark"; then
+        count=$((count + 1))
+    fi
+    if [[ -f "${EXTRAS_DIR}/kitty-dawn.conf" ]]; then
+        if safe_copy "${EXTRAS_DIR}/kitty-dawn.conf" "${theme_dir}/silkcircuit-dawn.conf" "kitty:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Kitty themes"
+    diminfo "Activate: include themes/silkcircuit.conf"
 }
 
 install_warp() {
@@ -422,6 +444,16 @@ install_warp() {
     copy_variants "${EXTRAS_DIR}/warp" "$HOME/.warp/themes" "warp" "silkcircuit-@.yaml"
     success "Installed ${COPIED} Warp themes"
     diminfo "Settings -> Appearance -> Themes -> SilkCircuit $(variant_label "$PRIMARY")"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/warp.yaml" "${theme_dir}/silkcircuit.yaml" "warp:dark"; then
+        count=$((count + 1))
+    fi
+    if [[ -f "${EXTRAS_DIR}/warp-dawn.yaml" ]]; then
+        if safe_copy "${EXTRAS_DIR}/warp-dawn.yaml" "${theme_dir}/silkcircuit-dawn.yaml" "warp:dawn"; then
+            count=$((count + 1))
+        fi
+    fi
+    success "Installed ${count} Warp themes"
 }
 
 install_wezterm() {
@@ -449,6 +481,46 @@ install_iterm2() {
     success "Staged ${COPIED} iTerm2 color presets"
     diminfo "Settings -> Profiles -> Colors -> Color Presets -> Import, then pick:"
     diminfo "${STAGING}/iterm2/silkcircuit-${PRIMARY}.itermcolors"
+    local target="$HOME/.config/silkcircuit/fzf.sh"
+    if safe_copy "${EXTRAS_DIR}/fzf.sh" "$target" "fzf"; then
+        success "Installed fzf theme"
+        diminfo "Add to shell rc: source ~/.config/silkcircuit/fzf.sh"
+    fi
+}
+
+install_git() {
+    printf "${PURPLE}${BOLD}  >> Git${RESET}\n"
+
+    local target="$HOME/.config/silkcircuit/gitconfig"
+    if safe_copy "${EXTRAS_DIR}/gitconfig" "$target" "git"; then
+        # Check if already included
+        if git config --global --get-all include.path 2>/dev/null | grep -q "silkcircuit/gitconfig"; then
+            success "Git theme already configured"
+        else
+            if [[ "$DRY_RUN" == false ]]; then
+                if git config --global --add include.path "$target"; then
+                    success "Installed Git theme (added include to .gitconfig)"
+                else
+                    FAILED+=("git:include.path")
+                    fail "Could not add include.path to global gitconfig"
+                fi
+            else
+                success "Git theme (dry-run: would add include to .gitconfig)"
+            fi
+        fi
+        if ! cmd_exists delta; then
+            diminfo "Tip: install delta for enhanced git diffs"
+        fi
+    fi
+}
+
+install_starship() {
+    printf "${PURPLE}${BOLD}  >> Starship${RESET}\n"
+
+    local target="$HOME/.config/starship.toml"
+    if safe_copy "${EXTRAS_DIR}/starship/starship.toml" "$target" "starship"; then
+        success "Installed Starship config"
+    fi
 }
 
 install_tmux() {
@@ -472,6 +544,24 @@ install_zellij() {
     success "Installed ${COPIED} Zellij themes"
     diminfo "In ~/.config/zellij/config.kdl: theme \"silkcircuit-${PRIMARY}\""
     diminfo "Needs Zellij 0.42 or newer"
+    local theme_dir
+    theme_dir="$(bat --config-dir 2>/dev/null)/themes"
+    local config_dir
+    config_dir="$(bat --config-dir 2>/dev/null)"
+
+    if [[ -n "$theme_dir" ]]; then
+        mkdir -p "$theme_dir"
+        if safe_copy "${EXTRAS_DIR}/bat/SilkCircuit.tmTheme" "${theme_dir}/SilkCircuit.tmTheme" "bat:theme"; then
+            safe_copy "${EXTRAS_DIR}/bat/config" "${config_dir}/config" "bat:config" || true
+            if [[ "$DRY_RUN" == false ]]; then
+                bat cache --build &>/dev/null || true
+            fi
+            success "Installed bat theme"
+        fi
+    else
+        warn "Could not determine bat config directory"
+        SKIPPED+=("bat")
+    fi
 }
 
 install_windows_terminal() {
@@ -486,6 +576,15 @@ install_windows_terminal() {
     diminfo "Settings -> Open JSON file, then paste into the top-level schemes array from:"
     diminfo "${dst}/silkcircuit.json"
     diminfo "Then set \"colorScheme\": \"SilkCircuit $(variant_label "$PRIMARY")\" on a profile"
+    local config_dir="$HOME/.config/lsd"
+    local count=0
+    if safe_copy "${EXTRAS_DIR}/lsd/colors.yaml" "${config_dir}/colors.yaml" "lsd:colors"; then
+        count=$((count + 1))
+    fi
+    if safe_copy "${EXTRAS_DIR}/lsd/config.yaml" "${config_dir}/config.yaml" "lsd:config"; then
+        count=$((count + 1))
+    fi
+    success "Installed ${count} lsd themes"
 }
 
 # ─── Editors ─────────────────────────────────────────────────────────────────
@@ -496,6 +595,75 @@ install_helix() {
     copy_variants "${EXTRAS_DIR}/helix" "${XDG_CONFIG}/helix/themes" "helix" "silkcircuit-@.toml"
     success "Installed ${COPIED} Helix themes"
     diminfo "In ~/.config/helix/config.toml: theme = \"silkcircuit-${PRIMARY}\""
+install_atuin() {
+    printf "${PURPLE}${BOLD}  >> Atuin${RESET}\n"
+
+    local theme_dir="$HOME/.config/atuin/themes"
+    if safe_copy "${EXTRAS_DIR}/atuin/silkcircuit.toml" "${theme_dir}/silkcircuit.toml" "atuin"; then
+        success "Installed Atuin theme"
+        diminfo "Add to atuin config.toml: theme = \"silkcircuit\""
+    fi
+}
+
+install_lazygit() {
+    printf "${PURPLE}${BOLD}  >> lazygit${RESET}\n"
+
+    local config_dir="$HOME/.config/lazygit"
+    local target="${config_dir}/config.yml"
+
+    # If config exists, check if themed already
+    if [[ -f "$target" ]] && grep -qi "silkcircuit\|neonPurple\|#e135ff" "$target" 2>/dev/null; then
+        success "lazygit already has SilkCircuit theme"
+        INSTALLED+=("lazygit")
+        return
+    fi
+
+    mkdir -p "$config_dir"
+
+    if [[ "$DRY_RUN" == true ]]; then
+        diminfo "dry-run: would write lazygit theme to ${target}"
+        INSTALLED+=("lazygit")
+        return
+    fi
+
+    # Merge theme into existing config or create new
+    if [[ -f "$target" ]] && grep -q "gui:" "$target" 2>/dev/null; then
+        warn "Existing lazygit config found - theme file saved separately"
+        safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "${config_dir}/silkcircuit-theme.yml" "lazygit:theme-ref" || true
+        diminfo "Merge theme settings from: ${config_dir}/silkcircuit-theme.yml"
+    else
+        if safe_copy "${EXTRAS_DIR}/lazygit/config.yml" "$target" "lazygit"; then
+            success "Installed lazygit theme"
+        fi
+    fi
+}
+
+install_fastfetch() {
+    printf "${PURPLE}${BOLD}  >> fastfetch${RESET}\n"
+
+    local target="$HOME/.config/fastfetch/config.jsonc"
+    if safe_copy "${EXTRAS_DIR}/fastfetch/config.jsonc" "$target" "fastfetch"; then
+        success "Installed fastfetch config"
+    fi
+}
+
+install_cosmic() {
+    printf "${PURPLE}${BOLD}  >> COSMIC Desktop${RESET}\n"
+
+    # Copy all variants to a central location
+    local cosmic_dir="$HOME/.config/silkcircuit/cosmic"
+    local count=0
+    for f in "${EXTRAS_DIR}/cosmic/silkcircuit-"*.ron; do
+        local name
+        name=$(basename "$f")
+        if safe_copy "$f" "${cosmic_dir}/${name}" "cosmic:${name}"; then
+            count=$((count + 1))
+        fi
+    done
+
+    success "Installed ${count} COSMIC themes"
+    diminfo "Import via: Settings -> Desktop -> Appearance -> Import"
+    diminfo "Theme files: ~/.config/silkcircuit/cosmic/"
 }
 
 install_vscode() {
