@@ -10,3 +10,7 @@
 # the documentation site
 assets/*-source.png export-ignore
 docs/ export-ignore
+
+# bash scripts automerge
+install.sh merge=union
+*.sh merge=union
