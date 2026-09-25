@@ -211,6 +211,10 @@ have_slack() {
         { cmd_exists flatpak && flatpak list 2>/dev/null | grep -qi slack; }
 }
 
+# TERMUX_VERSION is set by the app itself for every session; ~/.termux is the
+# fallback for a proot or SSH session that inherited a plain environment.
+have_termux() { [[ -n "${TERMUX_VERSION:-}" ]] || dir_exists "$HOME/.termux"; }
+
 detect_all() {
     printf '\n'
 
@@ -239,6 +243,7 @@ detect_all() {
     detect_if dircolors "dircolors" have_dircolors
     detect_if dmesg "dmesg" have_dmesg
     detect_if cosmic "COSMIC Desktop" have_cosmic
+    detect_if termux "Termux (app)" have_termux
 
     if cmd_exists git; then
         detect git "Git" true
@@ -1085,6 +1090,34 @@ install_dmesg() {
     fi
 }
 
+install_termux() {
+    section "Termux"
+
+    # The color-changer command that ships with Termux-zsh (and identical
+    # forks) only scans ~/.termux/colors/dark and .../light, picking a theme
+    # by prompting for one of those two directories first. dawn is the one
+    # light variant, so it is the only one that belongs under light/.
+    local termux_dir="$HOME/.termux"
+    local count=0
+    local variant appearance name
+    local primary_appearance="dark"
+    [[ "$PRIMARY" == "dawn" ]] && primary_appearance="light"
+    for variant in "${SELECTED[@]}"; do
+        appearance="dark"
+        [[ "$variant" == "dawn" ]] && appearance="light"
+        name="silkcircuit-${variant}.properties"
+        if safe_copy "${EXTRAS_DIR}/termux/${name}" \
+            "${termux_dir}/colors/${appearance}/${name}" "termux:${variant}"; then
+            count=$((count + 1))
+        fi
+    done
+
+    success "Installed ${count} Termux color schemes"
+    diminfo "Pick one: color-changer, then dark or light, then silkcircuit-${PRIMARY}"
+    diminfo "Or by hand: ln -sf ${termux_dir}/colors/${primary_appearance}/silkcircuit-${PRIMARY}.properties ${termux_dir}/colors.properties"
+    diminfo "then: termux-reload-settings"
+}
+
 install_cosmic() {
     section "COSMIC Desktop"
 
@@ -1154,6 +1187,7 @@ run_installs() {
             dircolors)        install_dircolors ;;
             dmesg)            install_dmesg ;;
             cosmic)           install_cosmic ;;
+            termux)           install_termux ;;
             vscode)           install_vscode ;;
             slack)            install_slack ;;
             windows-terminal) install_windows_terminal ;;

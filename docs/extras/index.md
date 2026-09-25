@@ -132,6 +132,7 @@ Regenerate the lot with `make build`, and this table with `make docs`.
 | procs                           | [reference](https://github.com/dalance/procs#configuration)                                        | `extras/procs/silkcircuit-{neon,vibrant,soft,glow,dawn}.toml`            |
 | Slack                           | [reference](https://slack.com/help/articles/205166337-Change-your-Slack-theme)                     | `extras/slack/silkcircuit-{neon,vibrant,soft,glow,dawn}.txt`             |
 | Starship                        | [reference](https://starship.rs/config/#color-palettes)                                            | `extras/starship/silkcircuit-{neon,vibrant,soft,glow,dawn}.toml`         |
+| Termux                          | [reference](https://wiki.termux.com/wiki/Color_schemes)                                            | `extras/termux/silkcircuit-{neon,vibrant,soft,glow,dawn}.properties`     |
 | tmux                            | [reference](https://man.openbsd.org/tmux#STYLES)                                                   | `extras/tmux/silkcircuit-{neon,vibrant,soft,glow,dawn}.conf`             |
 | VS Code                         | [reference](https://code.visualstudio.com/api/extension-guides/color-theme)                        | `extras/vscode/themes/silkcircuit-{neon,vibrant,soft,glow,dawn}.json`    |
 | Warp                            | [reference](https://docs.warp.dev/terminal/appearance/custom-themes)                               | `extras/warp/silkcircuit-{neon,vibrant,soft,glow,dawn}.yaml`             |

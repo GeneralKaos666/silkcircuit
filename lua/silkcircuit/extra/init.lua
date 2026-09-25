@@ -129,6 +129,11 @@ M.targets = {
     ext = "scheme",
     url = "https://www.man7.org/linux/man-pages/man5/terminal-colors.d.5.html",
   },
+  termux = {
+    label = "Termux",
+    ext = "properties",
+    url = "https://wiki.termux.com/wiki/Color_schemes",
+  },
   dircolors = {
     label = "GNU dircolors",
     ext = "dircolors",

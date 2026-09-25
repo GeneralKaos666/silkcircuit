@@ -833,6 +833,8 @@ function Set-K9sSkin {
 function Detect-All {
     Write-Host ""
 
+    # Unix-only targets (termux, dmesg, dircolors, foot, cosmic, iterm2) have
+    # no Windows install path; they are covered by install.sh alone.
     Add-Detection "windows-terminal" "Windows Terminal" (
         (Test-Command "wt") -or (Test-AnyPath (Get-WindowsTerminalStateDirs))
     )
